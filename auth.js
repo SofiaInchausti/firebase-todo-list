@@ -1,4 +1,3 @@
-// jshint esversion: 8
 const auth = firebase.auth();
 const provider = new firebase.auth.GoogleAuthProvider();
 

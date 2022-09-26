@@ -1,9 +1,8 @@
-// jshint esversion: 8
 import { login, logout } from "./auth.js";
 import { insert, getItems, update } from "./firestore.js";
 import { getUUID } from "./utils.js";
-let currentUser;
 
+let currentUser;
 let todos = [];
 
 const buttonLogin = document.getElementById("button-login");
@@ -15,8 +14,6 @@ const todosContainer = document.getElementById("todos-container");
 
 firebase.auth().onAuthStateChanged((user) => {
   if (user) {
-    // User is signed in, see docs for a list of available properties
-    // https://firebase.google.com/docs/reference/js/firebase.User
     var uid = user.uid;
     currentUser = user;
     init();
@@ -29,6 +26,7 @@ todoForm.addEventListener("submit", (e) => {
   const text = todoInput.value;
   if (text !== "") {
     addTodo(text);
+    text = ""
   }
 });
 
@@ -43,7 +41,6 @@ buttonLogin.addEventListener("click", async (e) => {
 
 buttonLogout.addEventListener("click", (e) => {
   logout();
-  //localStorage.removeItem("user");
   buttonLogin.classList.remove("hidden");
   buttonLogout.classList.add("hidden");
   todoForm.classList.add("hidden");
@@ -59,7 +56,6 @@ async function init() {
     <img src="${currentUser.photoURL}" width="32" />
     <span>${currentUser.displayName}</span>
   `;
-
   loadTodos();
 }
 
@@ -71,8 +67,16 @@ async function addTodo(text) {
       completed: false,
       userid: currentUser.uid,
     };
-    const response = await insert(todo);
+    const response = await insert(
+      {
+        id: getUUID(),
+        text: text,
+        completed: false,
+        userid: currentUser.uid,
+      }
+    );
     loadTodos();
+    todoForm.reset()
   } catch (error) {
     console.error(error);
   }
@@ -81,10 +85,8 @@ async function addTodo(text) {
 async function loadTodos() {
   todosContainer.innerHTML = "";
   todos = [];
-
   try {
     const response = await getItems(currentUser.uid);
-
     todos = [...response];
     renderTodos();
   } catch (error) {
@@ -97,16 +99,13 @@ function renderTodos() {
   todos.forEach((todo) => {
     html += `
       <li>
-        <input type="checkbox" id="${todo.id}" ${
-      todo.completed ? "checked" : ""
-    } />
+        <input type="checkbox" id="${todo.id}" ${todo.completed ? "checked" : ""
+      } />
         <label for="${todo.id}">${todo.text}</label>
       </li>
     `;
   });
-
   todosContainer.innerHTML = html;
-
   document
     .querySelectorAll('#todos-container input[type="checkbox"]')
     .forEach((checkbox) => {
